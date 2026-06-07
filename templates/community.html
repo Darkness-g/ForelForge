@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ForelForge - Сообщество</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="navbar">
+    <div class="nav-left">
+        <a class="nav-btn" href="{{ url_for('home') }}">Главная</a>
+        <a class="nav-btn" href="{{ url_for('games_page') }}">Игры</a>
+        <a class="nav-btn" href="{{ url_for('community') }}">Сообщество</a>
+        <a class="nav-btn" href="{{ url_for('library') }}">Библиотека</a>
+        <a class="nav-btn" href="{{ url_for('profile') }}">Профиль</a>
+    </div>
+    <div class="nav-right">
+        {% if session.get('username') %}
+            <a href="{{ url_for('add_balance') }}" class="nav-add-balance">Пополнить</a>
+            <span class="nav-balance">Balance: {{ user.balance }}$</span>
+
+            <a href="{{ url_for('profile') }}" class="nav-avatar">
+                <img src="{{ url_for('static', filename=session['avatar'].replace('static/', '')) }}" alt="avatar">
+                <span>{{ session['username'] }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="nav-auth-btn">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="nav-auth-btn">Вход</a>
+            <a href="{{ url_for('register') }}" class="nav-auth-btn">Регистрация</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="content">
+    <h1>Сообщество ForelForge</h1>
+    <a class="login-btn" href="{{ url_for('new_topic') }}">Создать топик</a>
+
+    <div class="topics-grid">
+        {% for topic in topics %}
+        <div class="topic-card">
+            <a href="{{ url_for('view_topic', topic_id=topic.id) }}">
+                <h3>{{ topic.title }}</h3>
+            </a>
+            <p>Создатель: {{ topic.creator }} | {{ topic.created_at }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>

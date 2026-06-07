@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>ForelForge - Все игры</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        
+        .games-container {
+            max-width: 1200px;
+            margin: 100px auto 50px auto; 
+            padding: 0 20px;
+        }
+
+       
+        .search-box {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-box input {
+            width: 100%;
+            max-width: 500px;
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 2px solid #ff4b4b;
+            background: rgba(255,255,255,0.05);
+            color: white;
+        }
+
+        .search-box input::placeholder {
+            color: #ffcccc;
+        }
+
+        
+        .game-row {
+    display: flex;
+    width: 100%;         
+    max-width: 900px;    
+    align-items: flex-start;
+    background: rgba(30,0,0,0.6);
+    border: 2px solid rgba(255,0,0,0.4);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    padding: 15px;
+    gap: 20px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+
+        .game-row:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(255,0,0,0.6);
+        }
+
+        .game-row img {
+            width: 120px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .game-info {
+            flex: 1;
+        }
+
+        .game-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            color: #ffdede;
+        }
+
+        .game-info p {
+            margin: 0;
+            font-size: 14px;
+            color: #ffcccc;
+        }
+
+        .game-info p.price {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .games-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+    </style>
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="nav-left">
+        <a class="nav-btn" href="{{ url_for('home') }}">Главная</a>
+        <a class="nav-btn" href="{{ url_for('games_page') }}">Игры</a>
+        <a class="nav-btn" href="{{ url_for('community') }}">Сообщество</a>
+        <a class="nav-btn" href="{{ url_for('library') }}">Библиотека</a>
+        <a class="nav-btn" href="{{ url_for('profile') }}">Профиль</a>
+    </div>
+    <div class="nav-right">
+        {% if session.get('username') %}
+             <a href="{{ url_for('add_balance') }}" class="nav-add-balance">Пополнить</a>
+            <span class="nav-balance">Balance: {{ user.balance }}$</span>
+
+            <a href="{{ url_for('profile') }}" class="nav-avatar">
+                <img src="{{ url_for('static', filename=session['avatar'].replace('static/', '')) }}" alt="avatar">
+                <span>{{ session['username'] }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="nav-auth-btn">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="nav-auth-btn">Вход</a>
+            <a href="{{ url_for('register') }}" class="nav-auth-btn">Регистрация</a>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class="games-container">
+  
+{% if session.get('username') %}
+<div class="games-controls" style="margin-bottom:20px; display:flex; gap:15px;">
+   
+    <a href="{{ url_for('upload_game') }}" class="nav-add-balance">Загрузить игру</a>
+
+
+    
+    {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('pending_games_page') }}" class="nav-add-balance">Проверить игры</a>
+
+    {% endif %}
+</div>
+{% endif %}
+
+   
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Поиск игр...">
+    </div>
+
+  
+    <div class="games-list">
+    {% for game in games %}
+    <a href="{{ url_for('store_game', game_id=game.id) }}" style="text-decoration:none; color:inherit;">
+    <div class="game-row">
+        <img src="{{ url_for('static', filename=game.image.replace('static/', '')) }}" alt="{{ game.title }}">
+        <div class="game-info">
+            <h3>{{ game.title }}</h3>
+            <p>{{ game.description[:250] }}{% if game.description|length > 250 %}...{% endif %}</p>
+            <p class="price">Цена: ${{ game.price }}</p>
+        </div>
+    </div>
+</a>
+
+     {% endfor %}
+    </div>
+
+</div>
+
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function() {
+        const filter = searchInput.value.toLowerCase();
+        const gameRows = document.querySelectorAll('.game-row');
+        gameRows.forEach(row => {
+            const title = row.querySelector('h3').textContent.toLowerCase();
+            if(title.includes(filter)){
+                row.parentElement.style.display = '';
+            } else {
+                row.parentElement.style.display = 'none';
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

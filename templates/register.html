@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация - ForelForge</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="navbar">
+    <a class="nav-btn" href="/">Главная</a>
+
+</div>
+
+<div class="login-container">
+    <h2>Регистрация</h2>
+
+    <form method="POST">
+        <label>Никнейм</label>
+        <input type="text" name="username" required>
+
+        <label>Email</label>
+        <input type="email" name="email" required>
+
+        <label>Пароль</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Создать аккаунт</button>
+    </form>
+
+    {% if error %}
+        <p style="color:red; margin-top:10px;">{{ error }}</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

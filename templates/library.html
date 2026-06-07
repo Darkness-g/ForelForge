@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Библиотека</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+
+<div class="navbar">
+    <div class="nav-left">
+        <a class="nav-btn" href="{{ url_for('home') }}">Главная</a>
+        <a class="nav-btn" href="{{ url_for('games_page') }}">Игры</a>
+        <a class="nav-btn" href="{{ url_for('community') }}">Сообщество</a>
+        <a class="nav-btn" href="{{ url_for('library') }}">Библиотека</a>
+        <a class="nav-btn" href="{{ url_for('profile') }}">Профиль</a>
+    </div>
+    <div class="nav-right">
+        {% if session.get('username') %}
+            <a href="{{ url_for('add_balance') }}" class="nav-add-balance">Пополнить</a>
+            <span class="nav-balance">Balance: {{ user.balance }}$</span>
+
+            <a href="{{ url_for('profile') }}" class="nav-avatar">
+                <img src="{{ url_for('static', filename=session['avatar'].replace('static/', '')) }}" alt="avatar">
+                <span>{{ session['username'] }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="nav-auth-btn">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="nav-auth-btn">Вход</a>
+            <a href="{{ url_for('register') }}" class="nav-auth-btn">Регистрация</a>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class="library-container">
+
+  
+    <div class="games-list">
+        {% if games %}
+            {% for g in games %}
+                <a href="{{ url_for('library_game', game_id=g.game_id) }}" style="text-decoration:none;">
+                    <div class="game-item {% if selected_game and g.game_id == selected_game.game_id %}active{% endif %}">
+                        <img src="{{ url_for('static', filename=g.image_url.replace('static/', '')) }}" alt="{{ g.title }}">
+                        <span>{{ g.title }}</span>
+                    </div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <p style="color:#ffbaba; padding:10px;">У вас пока нет игр...</p>
+        {% endif %}
+    </div>
+
+
+   <div class="game-details">
+    {% if selected_game %}
+      
+        <div class="cover-container">
+            <img class="game-cover-large" src="{{ url_for('static', filename=selected_game.image_url.replace('static/', '')) }}" alt="{{ selected_game.title }}">
+        </div>
+
+      
+        <div class="game-actions">
+            <h2>{{ selected_game.title }}</h2>
+            <a class="download-btn" href="{{ url_for('download_game', game_id=selected_game.game_id) }}">Скачать игру</a>
+        </div>
+
+    
+        <p class="game-description">{{ selected_game.description }}</p>
+    {% else %}
+        <h2 style="color:#ffcccc;">Выберите игру слева</h2>
+    {% endif %}
+</div>
+
+</div>
+
+</body>
+</html>

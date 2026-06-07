@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ game.title }}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .store-container {
+            max-width: 1000px;
+            margin: 100px auto 50px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .game-cover {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        .buy-btn {
+            padding: 12px 25px;
+            background: #ff0000;
+            color: white;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .buy-btn:hover {
+            background: #ff4b4b;
+            transform: scale(1.05);
+        }
+        .game-description {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #ffdddd;
+        }
+        .system-req {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(30,0,0,0.6);
+            border-radius: 10px;
+            color: #ffcccc;
+        }
+        .system-req h3 {
+            margin: 0 0 10px 0;
+            color: #ff8888;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="nav-left">
+        <a class="nav-btn" href="{{ url_for('home') }}">Главная</a>
+        <a class="nav-btn" href="{{ url_for('games_page') }}">Игры</a>
+        <a class="nav-btn" href="{{ url_for('community') }}">Сообщество</a>
+        <a class="nav-btn" href="{{ url_for('library') }}">Библиотека</a>
+        <a class="nav-btn" href="{{ url_for('profile') }}">Профиль</a>
+    </div>
+    <div class="nav-right">
+        {% if session.get('username') %}
+            <a href="{{ url_for('add_balance') }}" class="nav-add-balance">Пополнить</a>
+            <span class="nav-balance">Balance: {{ user.balance }}$</span>
+            <a href="{{ url_for('profile') }}" class="nav-avatar">
+                <img src="{{ url_for('static', filename=session['avatar'].replace('static/', '')) }}" alt="avatar">
+                <span>{{ session['username'] }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="nav-auth-btn">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="nav-auth-btn">Вход</a>
+            <a href="{{ url_for('register') }}" class="nav-auth-btn">Регистрация</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="store-container">
+
+    <img class="game-cover" src="{{ url_for('static', filename=game.image_url.replace('static/', '')) }}" alt="{{ game.title }}">
+
+   
+<div class="game-info">
+    <h1>{{ game.title }}</h1>
+    <p class="game-developer"><strong>Разработчик:</strong> {{ game.developer }}</p>
+
+    {% if game.price == 0 %}
+        <button class="buy-btn" onclick="addToLibrary('{{ game.game_id }}')">
+            Добавить в библиотеку
+        </button>
+    {% else %}
+        <form method="POST" action="{{ url_for('buy_game', game_id=game.game_id) }}">
+            <button class="buy-btn">
+                Купить за ${{ game.price }}
+            </button>
+        </form>
+    {% endif %}
+</div>
+
+  
+    <div class="game-description">
+        {{ game.description }}
+    </div>
+
+    
+    {% if game.system_requirements %}
+    <div class="system-req">
+        <h3>Системные требования:</h3>
+        <pre>{{ game.system_requirements }}</pre>
+    </div>
+    {% endif %}
+</div>
+
+{% if game.price == 0 %}
+<script>
+function addToLibrary(gameId) {
+    console.log("CLICK addToLibrary:", gameId);
+
+    fetch(`/api/add_to_library/${gameId}`, {
+        method: 'POST',
+        credentials: 'same-origin', 
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(async (res) => {
+        console.log("STATUS:", res.status);
+
+        const data = await res.json().catch(() => {
+            return { error: "Invalid JSON from server" };
+        });
+
+        console.log("DATA:", data);
+
+        if (!res.ok) {
+            alert("Ошибка: " + (data.error || "unknown error"));
+            return;
+        }
+
+        if (data.message) {
+            alert(data.message);
+            window.location.href = "/library";
+        } else if (data.error) {
+            alert("Ошибка: " + data.error);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Ошибка соединения: " + err);
+    });
+}
+</script>
+{% endif %}
+
+</body>
+</html>

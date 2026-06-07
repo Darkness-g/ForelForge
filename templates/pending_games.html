@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Проверка игр</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+
+<div class="navbar">
+    <div class="nav-left">
+        <a class="nav-btn" href="{{ url_for('games_page') }}">Назад</a>
+    </div>
+</div>
+
+
+<div class="library-container">
+
+    
+    <div class="games-list">
+        {% if games %}
+            {% for g in games %}
+                <a href="{{ url_for('pending_game', game_id=g.game_id) }}" style="text-decoration:none;">
+                    <div class="game-item {% if selected_game and g.game_id == selected_game.game_id %}active{% endif %}">
+                        <img src="{{ url_for('static', filename=g.image) }}" alt="{{ g.title }}">
+                        <span>{{ g.title }}</span>
+                    </div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <p style="color:#ffbaba; padding:10px;">Нет игр на проверку.</p>
+        {% endif %}
+    </div>
+
+    
+    <div class="game-details">
+        {% if selected_game %}
+            <div class="cover-container">
+                <img class="game-cover-large" src="{{ url_for('static', filename=selected_game.image) }}" alt="{{ selected_game.title }}">
+            </div>
+
+            <div class="game-actions">
+                <h2>{{ selected_game.title }}</h2>
+                <p class="game-description">{{ selected_game.description }}</p>
+                <p class="price">Цена: ${{ selected_game.price }}</p>
+
+                
+                {% if selected_game.file_path %}
+                   <a href="{{ url_for('download_game', game_id=selected_game.game_id) }}" class="nav-add-balance">
+                    Скачать файл
+                   </a>
+             {% endif %}
+
+                 <a href="{{ url_for('approve_game', game_id=selected_game.game_id) }}" class="nav-add-balance">Одобрить</a>
+                 <a href="{{ url_for('reject_game', game_id=selected_game.game_id) }}" class="nav-add-balance">Отклонить</a>
+            </div>
+        {% else %}
+            <h2 style="color:#ffcccc;">Выберите игру слева</h2>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>

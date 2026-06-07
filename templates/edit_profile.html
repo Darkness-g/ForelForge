@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактирование профиля</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body {
+            background: radial-gradient(circle at top, #1a0000, #000);
+            color: #ffdede;
+            font-family: Arial, sans-serif;
+        }
+        .form-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        }
+
+        .back-btn {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #142c00;
+        color: #000;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: 0.2s;
+        }
+
+        .back-btn:hover {
+        background-color: #7c0000;
+        }
+        .edit-container {
+            max-width: 450px;
+            margin: 120px auto;
+            background: rgba(30, 0, 0, 0.85);
+            border: 2px solid rgba(255, 0, 0, 0.4);
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ffcccc;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="file"] {
+            width: 100%;
+            margin-top: 6px;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(255,0,0,0.4);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .avatar-preview {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        .avatar-preview img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,0,0,0.6);
+        }
+
+        .save-btn {
+            width: 100%;
+            margin-top: 25px;
+            padding: 12px;
+            font-size: 16px;
+            background: linear-gradient(45deg, #ff2e2e, #b30000);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .save-btn:hover {
+            box-shadow: 0 0 15px rgba(255,0,0,0.8);
+        }
+
+        .error {
+            color: #ff9b9b;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="edit-container">
+    <h2>Редактирование профиля</h2>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+        <label>Никнейм</label>
+        <input type="text" name="username" value="{{ user.username }}" required>
+
+        <label>Email</label>
+        <input type="email" name="email" value="{{ user.email }}" required>
+
+        <label>Аватарка</label>
+        <input type="file" name="avatar" accept="image/*">
+
+        <div class="avatar-preview">
+            <img src="/{{ user.avatar_url }}" alt="avatar">
+        </div>
+
+        <div class="form-buttons">
+            <a href="{{ url_for('profile') }}" class="save-btn">Назад</a>
+            <button class="save-btn" type="submit">Сохранить</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Профиль - ForelForge</title>
+<style>
+    .items-grid{
+        size: 10%;
+    }
+    .ttt{
+        
+        height: 40%;
+        width: 40%;
+        border: 2px solid rgba(255,0,0,0.4);
+        box-shadow: 
+        0 0 12px rgba(255, 40, 40, 0.8),
+        0 0 24px rgba(255, 20, 20, 0.6),
+        inset 0 0 12px rgba(255, 50, 50, 0.7);
+        border-radius: 5%;
+        
+    }
+    
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+<div class="navbar">
+    <div class="nav-left">
+        <a class="nav-btn" href="{{ url_for('home') }}">Главная</a>
+        <a class="nav-btn" href="{{ url_for('games_page') }}">Игры</a>
+        <a class="nav-btn" href="{{ url_for('community') }}">Сообщество</a>
+        <a class="nav-btn" href="{{ url_for('library') }}">Библиотека</a>
+        <a class="nav-btn" href="{{ url_for('profile') }}">Профиль</a>
+    </div>
+    <div class="nav-right">
+        {% if session.get('username') %}
+            <a href="{{ url_for('add_balance') }}" class="nav-add-balance">Пополнить</a>
+            <span class="nav-balance">Balance: {{ user.balance }}$</span>
+
+            <a href="{{ url_for('profile') }}" class="nav-avatar">
+                <img src="{{ url_for('static', filename=session['avatar'].replace('static/', '')) }}" alt="avatar">
+                <span>{{ session['username'] }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="nav-auth-btn">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="nav-auth-btn">Вход</a>
+            <a href="{{ url_for('register') }}" class="nav-auth-btn">Регистрация</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="profile-container">
+    <div class="profile-header">
+        <div class="profile-left">
+            <h2>{{ user.username }}</h2>
+        </div>
+        <div class="profile-right">
+            <img src="{{ user.avatar }}" alt="Аватар" class="profile-avatar">
+        </div>
+    </div>
+
+    <div class="profile-actions">
+        <a href="{{ url_for('edit_profile') }}" class="edit-profile-btn">Редактировать профиль</a>
+    </div>
+
+    <div class="user-vitrine">
+    <h3>Мои игры</h3>
+    <div class="games-grid">
+        {% if user_items %}
+            {% for game in user_items %}
+                <div class="game-card">
+                    <a href="{{ url_for('games_page', game_id=game.id) }}">
+                        <img src="{{ game.image }}" alt="{{ game.name }}" class="game-image">
+                        <p class="game-title">{{ game.name }}</p>
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>Вы ещё не приобрели ни одной игры.</p>
+        {% endif %}
+    </div>
+</div>
+</div>
+<div class="profile-comment">
+    
+</div>
+</body>
+</html>
