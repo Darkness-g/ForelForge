@@ -2,12 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import pyodbc
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import shutil
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "super_secret_key_123"  
+app.secret_key = os.getenv("SECRET_KEY")
 
 
 UPLOAD_FOLDER_GAMES = "static/uploads/games"
@@ -26,9 +29,8 @@ ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename, allowed_ext):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_ext
 
-conn = pyodbc.connect(
-    'DRIVER={SQL Server};SERVER=localhost\\SQLEXPRESS;DATABASE=FarelDorge;Trusted_Connection=yes'
-)
+
+conn = pyodbc.connect(os.getenv("DB_CONNECTION_STRING"))
 cursor = conn.cursor()
 
 @app.route('/')
@@ -327,6 +329,7 @@ def register():
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+       
 
        
         cursor.execute("SELECT id FROM Users WHERE username=?", (username,))
@@ -336,13 +339,14 @@ def register():
        
         default_avatar = 'images/users/default15253526215.png'
 
+        password_hash = generate_password_hash(password)
        
         cursor.execute(
             """
             INSERT INTO Users (username, email, password_hash, avatar_url, balance)
             VALUES (?, ?, ?, ?, ?)
             """,
-            (username, email, password, default_avatar, 0)
+            (username, email, password_hash, default_avatar, 0)
         )
         session['avatar'] = default_avatar
         conn.commit()
@@ -446,13 +450,13 @@ def login():
         password = request.form['password']
 
         cursor.execute("""
-            SELECT id, username, avatar_url, balance, role 
+            SELECT id, username, avatar_url, balance, role, password_hash
             FROM Users 
-            WHERE username=? AND password_hash=?
-        """, (username, password))
+            WHERE username=?
+        """, (username,))
         user = cursor.fetchone()
 
-        if user:
+        if user and check_password_hash(user[5], password):
             session['id'] = user[0]
             session['username'] = user[1]
             session['avatar'] = user[2]
@@ -721,9 +725,7 @@ def edit_profile():
 
     user_id = session['id']
 
-    conn_local = pyodbc.connect(
-        'DRIVER={SQL Server};SERVER=localhost\\SQLEXPRESS;DATABASE=FarelDorge;Trusted_Connection=yes'
-    )
+    conn_local = pyodbc.connect(os.getenv("DB_CONNECTION_STRING"))
     cursor = conn_local.cursor()
 
     if request.method == 'POST':

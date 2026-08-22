@@ -6,4 +6,5 @@ node_modules/
 *.exe
 static/uploads/
 uploads/
-.venv/
+.env
+

@@ -651,3 +651,16 @@ html, body {
     color: #ff4b4b;
     text-shadow: 0 0 5px rgba(255, 75, 75, 0.7);
 }
+
+
+.info-text {
+    padding-top: 80px;
+    padding-left: 20px;
+    font-size: 20px;
+    text-shadow: 0 0 5px rgba(255, 75, 75, 0.7);
+}
+
+.titleMAIN {
+    text-shadow: 0 0 5px rgba(255, 75, 75, 0.7);
+   
+}
