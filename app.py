@@ -141,8 +141,8 @@ def upload_game():
             conn.commit()
             success = "Игра успешно загружена! Она появится после проверки администратором."
 
-            cursor.close
-            conn.close
+            cursor.close()
+            conn.close()
 
     return render_template("upload_game.html", error=error, success=success)
 
@@ -159,8 +159,8 @@ def pending_game(game_id):
     rows = cursor.fetchall()
     pending_games = []
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
 
     for g in rows:
         pending_games.append({
@@ -190,8 +190,8 @@ def pending_games_page():
 
     pending_games = []
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
 
     for g in rows:
         pending_games.append({
@@ -248,8 +248,8 @@ def approve_game(game_id):
     )
     conn.commit()
 
-    cursor.close
-    conn.close 
+    cursor.close()
+    conn.close()
 
     return redirect(url_for("pending_games_page"))
 
@@ -277,8 +277,8 @@ def reject_game(game_id):
     cursor.execute("DELETE FROM Games WHERE game_id=?", (game_id,))
     conn.commit()
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     return redirect(url_for("pending_games_page"))
 
 
@@ -291,8 +291,8 @@ def games_page():
     games_list = cursor.fetchall()
     games = [Game(g) for g in games_list]
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     return render_template('games.html', games=games)
 
 @app.route("/store/<int:game_id>")
@@ -310,8 +310,8 @@ def store_game(game_id):
     """, (game_id,))
     game = fetchone_dict(cursor)
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
 
     if not game:
         return "Игра не найдена", 404
@@ -370,8 +370,8 @@ def buy_game(game_id):
 
     conn.commit()
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     
     session['balance'] = new_balance
 
@@ -416,8 +416,8 @@ def register():
         session['balance'] = 0
         session['role'] = 'user'
 
-        cursor.close
-        conn.close
+        cursor.close()
+        conn.close()
 
         return redirect(url_for('home'))
 
@@ -439,8 +439,8 @@ def community():
     topics_list = cursor.fetchall()
     topics = []
 
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
 
     for t in topics_list:
         topics.append({
@@ -466,8 +466,8 @@ def new_topic():
         cursor.execute("INSERT INTO Topics (title, creator_id) VALUES (?, ?)", (title, creator_id))
         conn.commit()
 
-        cursor.close
-        conn.close
+        cursor.close()
+        conn.close()
 
         return redirect(url_for('community'))
 
@@ -511,8 +511,8 @@ def view_topic(topic_id):
     """, (topic_id,))
     messages_list = cursor.fetchall()
     messages = []
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     for m in messages_list:
         messages.append({
             'content': m.content,
@@ -538,8 +538,8 @@ def login():
             WHERE username=?
         """, (username,))
         user = cursor.fetchone()
-        cursor.close
-        conn.close
+        cursor.close()
+        conn.close()
         if user and check_password_hash(user[5], password):
             session['id'] = user[0]
             session['username'] = user[1]
@@ -595,8 +595,8 @@ def add_to_library(game_id):
     cursor.execute("INSERT INTO purchases (user_id, game_id, purchase_date) VALUES (?, ?, GETDATE())",
                    (user_id, game_id))
     conn.commit()
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     return jsonify({"message": "Игра успешно добавлена в библиотеку"})
 
 
@@ -616,8 +616,8 @@ def api_my_games():
     """, (user_id,))
 
     games = fetchall_dict(cursor)
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     return jsonify(games)
 
 
@@ -639,8 +639,8 @@ def library():
         WHERE p.user_id = ?
     """, (user_id,))
     games = fetchall_dict(cursor)
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     return render_template("library.html", games=games, selected_game=None)
 
 
@@ -669,8 +669,8 @@ def library_game(game_id):
         WHERE p.user_id = ?
     """, (user_id,))
     games = fetchall_dict(cursor)
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     return render_template("library.html", games=games, selected_game=selected_game)
 
 
@@ -698,8 +698,8 @@ def download_game(game_id):
         """, (game_id, user_id))
 
     row = cursor.fetchone()
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     if not row:
         abort(404, "Игра не найдена или не куплена")
 
@@ -740,8 +740,8 @@ def profile():
 """, (session['id'],))  
     purchased_games_list = cursor.fetchall()
     user_games = []
-    cursor.close
-    conn.close
+    cursor.close()
+    conn.close()
     for game in purchased_games_list:
         user_games.append({
             'id': game.game_id,
@@ -762,8 +762,8 @@ def inject_user():
     if session.get('id'):
         cursor.execute("SELECT username, avatar_url, balance FROM Users WHERE id=?", (session['id'],))
         row = cursor.fetchone()
-        cursor.close
-        conn.close
+        cursor.close()
+        conn.close()
         if row:
             return dict(user={
                 'username': row.username,
@@ -797,6 +797,8 @@ def add_balance():
         if not error:
             cursor.execute("UPDATE Users SET balance = balance + ? WHERE id = ?", (amount, session['id']))
             conn.commit()
+            cursor.close()
+            conn.close()
             session['balance'] = float(session.get('balance', 0)) + amount
 
             return redirect(url_for('profile'))
@@ -868,8 +870,7 @@ def edit_profile():
             """, (new_username, new_email, user_id))
 
         conn_local.commit()
-        cursor.close()
-        conn_local.close()
+        
 
         session['username'] = new_username
         return redirect(url_for('profile'))
