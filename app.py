@@ -30,15 +30,28 @@ def allowed_file(filename, allowed_ext):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_ext
 
 
-conn = pyodbc.connect(os.getenv("DB_CONNECTION_STRING"))
-cursor = conn.cursor()
+def get_db_connection():
+    return pyodbc.connect(os.getenv("DB_CONNECTION_STRING"))
+
+
+
+
+
 
 @app.route('/')
 def home():
     if session.get('username'):
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
         cursor.execute("SELECT game_id, title, description, price, release_date, developer, image_url FROM Games WHERE status='approved'")
         games_list = cursor.fetchall()
         games = []
+
+        cursor.close()
+        conn.close()
+        
         for g in games_list:
             games.append({
                 'id': g.game_id,
@@ -108,6 +121,7 @@ def upload_game():
                 image_db_path = "images/default_game.png"  
 
             
+            conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO Games 
@@ -127,6 +141,9 @@ def upload_game():
             conn.commit()
             success = "Игра успешно загружена! Она появится после проверки администратором."
 
+            cursor.close
+            conn.close
+
     return render_template("upload_game.html", error=error, success=success)
 
 
@@ -135,11 +152,16 @@ def pending_game(game_id):
     if session.get("role") != "admin":
         return "Доступ запрещен", 403
 
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute("SELECT game_id, title, description, price, image_url, file_path FROM Games WHERE status='pending'")
     rows = cursor.fetchall()
     pending_games = []
+
+    cursor.close
+    conn.close
+
     for g in rows:
         pending_games.append({
             "game_id": g[0],
@@ -160,11 +182,17 @@ def pending_games_page():
     if session.get("role") != "admin":
         return "Доступ запрещен", 403
 
+    conn = get_db_connection()
     cursor = conn.cursor()
+
     cursor.execute("SELECT game_id, title, description, price, image_url, file_path FROM Games WHERE status='pending'")
     rows = cursor.fetchall()
 
     pending_games = []
+
+    cursor.close
+    conn.close
+
     for g in rows:
         pending_games.append({
             "game_id": g[0],
@@ -185,7 +213,9 @@ def approve_game(game_id):
     if session.get("role") != "admin":
         return "Доступ запрещен", 403
 
+    conn = get_db_connection()
     cursor = conn.cursor()
+
     cursor.execute("SELECT file_path, image_url FROM Games WHERE game_id=?", (game_id,))
     game = cursor.fetchone()
     if not game:
@@ -217,14 +247,22 @@ def approve_game(game_id):
         (approved_game_path.replace("\\", "/"), approved_image_db, game_id)
     )
     conn.commit()
+
+    cursor.close
+    conn.close 
+
     return redirect(url_for("pending_games_page"))
+
+    
 
 @app.route("/reject-game/<int:game_id>")
 def reject_game(game_id):
     if session.get("role") != "admin":
         return "Доступ запрещен", 403
 
+    conn = get_db_connection()
     cursor = conn.cursor()
+
     cursor.execute("SELECT file_path, image_url FROM Games WHERE game_id=?", (game_id,))
     game = cursor.fetchone()
     if not game:
@@ -238,14 +276,23 @@ def reject_game(game_id):
 
     cursor.execute("DELETE FROM Games WHERE game_id=?", (game_id,))
     conn.commit()
+
+    cursor.close
+    conn.close
     return redirect(url_for("pending_games_page"))
 
 
 @app.route('/games')
 def games_page():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("SELECT game_id, title, description, price, release_date, developer, image_url FROM Games WHERE status='approved'")
     games_list = cursor.fetchall()
     games = [Game(g) for g in games_list]
+
+    cursor.close
+    conn.close
     return render_template('games.html', games=games)
 
 @app.route("/store/<int:game_id>")
@@ -253,13 +300,18 @@ def store_game(game_id):
     if not session.get("username"):
         return redirect(url_for("login"))
 
+    conn = get_db_connection()
     cursor = conn.cursor()
+
     cursor.execute("""
         SELECT game_id, title, description, price, developer, release_date, image_url, system_requirements
         FROM Games
         WHERE game_id=?
     """, (game_id,))
     game = fetchone_dict(cursor)
+
+    cursor.close
+    conn.close
 
     if not game:
         return "Игра не найдена", 404
@@ -279,6 +331,7 @@ def buy_game(game_id):
         return redirect(url_for('login'))
 
     user_id = session['id']
+    conn = get_db_connection()
     cursor = conn.cursor()
 
    
@@ -317,6 +370,8 @@ def buy_game(game_id):
 
     conn.commit()
 
+    cursor.close
+    conn.close
     
     session['balance'] = new_balance
 
@@ -330,8 +385,9 @@ def register():
         email = request.form['email']
         password = request.form['password']
        
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-       
         cursor.execute("SELECT id FROM Users WHERE username=?", (username,))
         if cursor.fetchone():
             return render_template('register.html', error="Имя пользователя занято")
@@ -360,6 +416,9 @@ def register():
         session['balance'] = 0
         session['role'] = 'user'
 
+        cursor.close
+        conn.close
+
         return redirect(url_for('home'))
 
     return render_template('register.html')
@@ -367,7 +426,10 @@ def register():
 
 @app.route('/community')
 def community():
-    
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("""
         SELECT t.topic_id, t.title, u.username, t.created_at
         FROM Topics t
@@ -376,6 +438,10 @@ def community():
     """)
     topics_list = cursor.fetchall()
     topics = []
+
+    cursor.close
+    conn.close
+
     for t in topics_list:
         topics.append({
             'id': t.topic_id,
@@ -394,8 +460,15 @@ def new_topic():
         title = request.form['title']
         creator_id = session['id']
 
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
         cursor.execute("INSERT INTO Topics (title, creator_id) VALUES (?, ?)", (title, creator_id))
         conn.commit()
+
+        cursor.close
+        conn.close
+
         return redirect(url_for('community'))
 
     return render_template('new_topic.html')
@@ -403,6 +476,10 @@ def new_topic():
 
 @app.route('/community/topic/<int:topic_id>', methods=['GET', 'POST'])
 def view_topic(topic_id):
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     if request.method == 'POST':
         if not session.get('username'):
             return redirect(url_for('login'))
@@ -412,6 +489,7 @@ def view_topic(topic_id):
         cursor.execute("INSERT INTO Messages (topic_id, user_id, content) VALUES (?, ?, ?)",
                        (topic_id, user_id, content))
         conn.commit()
+        
         return redirect(url_for('view_topic', topic_id=topic_id))
 
 
@@ -433,6 +511,8 @@ def view_topic(topic_id):
     """, (topic_id,))
     messages_list = cursor.fetchall()
     messages = []
+    cursor.close
+    conn.close
     for m in messages_list:
         messages.append({
             'content': m.content,
@@ -445,6 +525,9 @@ def view_topic(topic_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -455,7 +538,8 @@ def login():
             WHERE username=?
         """, (username,))
         user = cursor.fetchone()
-
+        cursor.close
+        conn.close
         if user and check_password_hash(user[5], password):
             session['id'] = user[0]
             session['username'] = user[1]
@@ -483,29 +567,13 @@ def fetchone_dict(cursor):
 
 
 
-# downnn
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @app.route('/api/add_to_library/<int:game_id>', methods=['POST'])
 def add_to_library(game_id):
     if 'id' not in session:
         return jsonify({"error": "Не авторизован"}), 401
 
     user_id = session['id']
+    conn = get_db_connection()
     cursor = conn.cursor()
 
 
@@ -527,7 +595,8 @@ def add_to_library(game_id):
     cursor.execute("INSERT INTO purchases (user_id, game_id, purchase_date) VALUES (?, ?, GETDATE())",
                    (user_id, game_id))
     conn.commit()
-
+    cursor.close
+    conn.close
     return jsonify({"message": "Игра успешно добавлена в библиотеку"})
 
 
@@ -537,7 +606,8 @@ def api_my_games():
         return jsonify({"error": "Unauthorized"}), 401
 
     user_id = session.get("id")
-
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute("""
         SELECT g.game_id, g.title, g.file_path
         FROM Games g
@@ -546,6 +616,8 @@ def api_my_games():
     """, (user_id,))
 
     games = fetchall_dict(cursor)
+    cursor.close
+    conn.close
     return jsonify(games)
 
 
@@ -556,7 +628,8 @@ def library():
     if not session.get("username"):
         return redirect(url_for("login"))
 
-    user_id = session.get("id")  
+    user_id = session.get("id") 
+    conn = get_db_connection() 
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -566,7 +639,8 @@ def library():
         WHERE p.user_id = ?
     """, (user_id,))
     games = fetchall_dict(cursor)
-
+    cursor.close
+    conn.close
     return render_template("library.html", games=games, selected_game=None)
 
 
@@ -577,6 +651,7 @@ def library_game(game_id):
         return redirect(url_for("login"))
 
     user_id = session.get("id")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -594,7 +669,8 @@ def library_game(game_id):
         WHERE p.user_id = ?
     """, (user_id,))
     games = fetchall_dict(cursor)
-
+    cursor.close
+    conn.close
     return render_template("library.html", games=games, selected_game=selected_game)
 
 
@@ -608,6 +684,7 @@ def download_game(game_id):
         return redirect(url_for('login'))
 
     user_id = session['id']
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     if session.get('role') == 'admin':
@@ -621,7 +698,8 @@ def download_game(game_id):
         """, (game_id, user_id))
 
     row = cursor.fetchone()
-
+    cursor.close
+    conn.close
     if not row:
         abort(404, "Игра не найдена или не куплена")
 
@@ -635,6 +713,10 @@ def download_game(game_id):
 
 @app.route('/profile')
 def profile():
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     if not session.get('id'):
         return redirect(url_for('login'))
 
@@ -658,7 +740,8 @@ def profile():
 """, (session['id'],))  
     purchased_games_list = cursor.fetchall()
     user_games = []
-
+    cursor.close
+    conn.close
     for game in purchased_games_list:
         user_games.append({
             'id': game.game_id,
@@ -672,9 +755,15 @@ def profile():
 
 @app.context_processor
 def inject_user():
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     if session.get('id'):
         cursor.execute("SELECT username, avatar_url, balance FROM Users WHERE id=?", (session['id'],))
         row = cursor.fetchone()
+        cursor.close
+        conn.close
         if row:
             return dict(user={
                 'username': row.username,
@@ -686,6 +775,9 @@ def inject_user():
 
 @app.route('/add_balance', methods=['GET', 'POST'])
 def add_balance():
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
     if 'id' not in session:
         return redirect(url_for('login'))
 
@@ -725,7 +817,7 @@ def edit_profile():
 
     user_id = session['id']
 
-    conn_local = pyodbc.connect(os.getenv("DB_CONNECTION_STRING"))
+    conn_local = get_db_connection()
     cursor = conn_local.cursor()
 
     if request.method == 'POST':
